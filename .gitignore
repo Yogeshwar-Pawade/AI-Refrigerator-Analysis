@@ -1,18 +1,57 @@
-# Environment variables
-.env
-*.env
+# 1. First, make sure you're in the right directory
+cd /Users/yogeshwarpawade/Desktop/AI-Analysis
 
+# 2. Check your git log to see the commits
+git log --oneline
+
+# 3. Reset to before the commit with secrets (assuming it was your first commit)
+git reset --hard HEAD~1
+
+# 4. Or if you want to start completely fresh:
+rm -rf .git
+git init
+git branch -M main
+
+# 5. Make sure .env is properly ignored
+echo "# Environment variables - NEVER commit these!" > .gitignore
+echo ".env" >> .gitignore
+echo "*.env" >> .gitignore
+echo "" >> .gitignore
+cat >> .gitignore << 'EOF'
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 env/
 venv/
-.venv
-pip-log.txt
-pip-delete-this-directory.txt
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# FastAPI/Uvicorn
+.pytest_cache/
+htmlcov/
 
 # Node.js
 node_modules/
@@ -23,8 +62,9 @@ yarn-error.log*
 # Next.js
 .next/
 out/
+next-env.d.ts
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -36,3 +76,38 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Temporary files
+tmp/
+temp/
+uploads/
+temp_videos/
+*.mp4
+*.avi
+*.mov
+
+# Database
+*.db
+*.sqlite
+
+# Config files with secrets
+config.json
+secrets.json
+aws-credentials.json
+EOF
+
+# 6. Remove .env file if it exists
+rm -f .env
+
+# 7. Make sure .env is not in your working directory for this commit
+ls -la | grep .env
+
+# 8. Add all files except .env
+git add .
+
+# 9. Commit without the .env file
+git commit -m "Initial commit: FastAPI backend (no secrets)"
+
+# 10. Connect to your GitHub repo and push
+git remote add origin https://github.com/Yogeshwar-Pawade/AI-Analysis-Backend.git
+git push -u origin main

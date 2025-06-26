@@ -5,7 +5,12 @@
             "AllowedMethods": ["GET", "POST", "PUT", "DELETE", "HEAD"],
             "AllowedOrigins": [
                 "http://localhost:3000",
-                "http://127.0.0.1:3000"
+                "http://localhost:3001",
+                "https://ai-analysis-backend-production.up.railway.app",
+                "https://*.vercel.app",
+                "https://*.netlify.app",
+                "https://*.railway.app",
+                "https://your-frontend-domain.com"
             ],
             "ExposeHeaders": ["ETag", "x-amz-meta-custom-header"],
             "MaxAgeSeconds": 3000

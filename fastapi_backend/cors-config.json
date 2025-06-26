@@ -1,0 +1,11 @@
+{
+  "allowed_origins": [
+    "http://localhost:3000",
+    "http://localhost:3001", 
+    "https://*.vercel.app",
+    "https://*.netlify.app",
+    "https://*.railway.app",
+    "https://ai-analysis-frontend.vercel.app",
+    "https://your-frontend-domain.com"
+  ]
+} 

@@ -93,6 +93,7 @@ export default function Home() {
         }
       }
     } catch (error) {
+      console.error('Error processing S3 video:', error)
       setError(error instanceof Error ? error.message : 'Failed to process S3 video')
       setProgress(0)
       setProgressMessage("")
@@ -100,6 +101,7 @@ export default function Home() {
       setIsProcessing(false)
     }
   }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -146,87 +148,85 @@ export default function Home() {
                 Upload a video showing your refrigerator problem to get AI-powered diagnosis and repair solutions
               </CardDescription>
             </CardHeader>
-                         <CardContent className="space-y-6">
-               <VideoUploadS3
-                 onVideoUploaded={handleVideoUploaded}
-                 onProgress={handleUploadProgress}
-                 maxDuration={30}
-               />
-               
-               {/* Processing Progress */}
-               {isProcessing && (
-                 <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-lg">
-                   <CardContent className="p-6">
-                     <div className="space-y-4">
-                       <div className="flex items-center justify-between">
-                         <div className="flex items-center space-x-3">
-                           <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                             <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
-                           </div>
-                           <div>
-                             <p className="font-semibold text-slate-900">Diagnosing Refrigerator</p>
-                             <p className="text-sm text-slate-600">{progressMessage || "Analyzing refrigerator problem..."}</p>
-                           </div>
-                         </div>
-                         <div className="text-right">
-                           <p className="text-2xl font-bold text-blue-600">{progress}%</p>
-                           <p className="text-xs text-slate-500">Complete</p>
-                         </div>
-                       </div>
-                       
-                       <div className="space-y-2">
-                         <Progress 
-                           value={progress} 
-                           className="h-3 bg-slate-200 rounded-full"
-                         />
-                         <div className="flex justify-between text-xs text-slate-500">
-                           <span>Started</span>
-                           <span>In Progress</span>
-                           <span>Complete</span>
-                         </div>
-                       </div>
+            <CardContent className="space-y-6">
+              <VideoUploadS3
+                onVideoUploaded={handleVideoUploaded}
+                onProgress={handleUploadProgress}
+                maxDuration={30}
+              />
+              
+              {/* Processing Progress */}
+              {isProcessing && (
+                <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">Diagnosing Refrigerator</p>
+                            <p className="text-sm text-slate-600">{progressMessage || "Analyzing refrigerator problem..."}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-blue-600">{progress}%</p>
+                          <p className="text-xs text-slate-500">Complete</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Progress 
+                          value={progress} 
+                          className="h-3 bg-slate-200 rounded-full"
+                        />
+                        <div className="flex justify-between text-xs text-slate-500">
+                          <span>Started</span>
+                          <span>In Progress</span>
+                          <span>Complete</span>
+                        </div>
+                      </div>
 
-                       {progress >= 100 && (
-                         <div className="bg-green-50 rounded-xl p-3 border border-green-200">
-                           <div className="flex items-center space-x-2">
-                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                             <span className="text-sm font-medium text-green-800">
-                               Diagnosis complete! Redirecting to results...
-                             </span>
-                           </div>
-                         </div>
-                       )}
-                     </div>
-                   </CardContent>
-                 </Card>
-               )}
+                      {progress >= 100 && (
+                        <div className="bg-green-50 rounded-xl p-3 border border-green-200">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span className="text-sm font-medium text-green-800">
+                              Diagnosis complete! Redirecting to results...
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-               {/* Error Display */}
-               {error && (
-                 <Card className="border-destructive/20 bg-destructive/5">
-                   <CardContent className="p-4">
-                     <div className="text-destructive text-sm">
-                       <strong>Error:</strong> {error}
-                     </div>
-                   </CardContent>
-                 </Card>
-               )}
+              {/* Error Display */}
+              {error && (
+                <Card className="border-destructive/20 bg-destructive/5">
+                  <CardContent className="p-4">
+                    <div className="text-destructive text-sm">
+                      <strong>Error:</strong> {error}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-               {/* Generate Summary Button */}
-               {s3Key && !isProcessing && (
-                 <Button 
-                   onClick={processS3Video}
-                   className="w-full interactive-button" 
-                   size="lg"
-                 >
-                   <Sparkles className="h-4 w-4 mr-2" />
-                   Start Diagnosis
-                 </Button>
-               )}
-             </CardContent>
+              {/* Generate Summary Button */}
+              {s3Key && !isProcessing && (
+                <Button 
+                  onClick={processS3Video}
+                  className="w-full interactive-button" 
+                  size="lg"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Start Diagnosis
+                </Button>
+              )}
+            </CardContent>
           </Card>
-
-
 
           {/* How it Works */}
           <Card>

@@ -1,26 +1,48 @@
-import google.generativeai as genai
-import aiohttp
-import asyncio
 import os
 import json
 import logging
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from dotenv import load_dotenv
-import ssl
 
 # Load environment variables from .env file
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# Import Google AI with error handling
+try:
+    import google.generativeai as genai
+    GOOGLE_AI_AVAILABLE = True
+except ImportError as e:
+    logger.error(f"Google Generative AI not available: {e}")
+    GOOGLE_AI_AVAILABLE = False
+    genai = None
+
+# Import other dependencies with error handling
+try:
+    import aiohttp
+    import asyncio
+    import ssl
+    HTTP_CLIENT_AVAILABLE = True
+except ImportError as e:
+    logger.error(f"HTTP client dependencies not available: {e}")
+    HTTP_CLIENT_AVAILABLE = False
+
 # Create SSL context that can handle certificate verification issues
 def create_ssl_context():
     """Create SSL context with proper certificate handling"""
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-    return ssl_context
+    if not HTTP_CLIENT_AVAILABLE:
+        return None
+    
+    try:
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        return ssl_context
+    except Exception as e:
+        logger.error(f"Failed to create SSL context: {e}")
+        return None
 
 @dataclass
 class GoogleFileUploadResult:
@@ -44,14 +66,38 @@ class RefrigeratorDiagnosisResult:
 
 class GoogleFilesProcessor:
     def __init__(self):
+        # Check if Google AI is available
+        if not GOOGLE_AI_AVAILABLE:
+            logger.error("Google Generative AI is not available")
+            self.api_key = None
+            return
+            
+        # Check for API key
         api_key = os.getenv('GEMINI_API_KEY')
-        if not api_key:
-            raise ValueError('Gemini API key is not configured. Please add GEMINI_API_KEY to environment variables.')
-        self.api_key = api_key
-        genai.configure(api_key=api_key)
+        if not api_key or api_key.startswith('your_'):
+            logger.warning('Gemini API key is not configured properly')
+            self.api_key = None
+            return
+            
+        try:
+            self.api_key = api_key
+            genai.configure(api_key=api_key)
+            logger.info("✅ Google Files Processor initialized successfully")
+        except Exception as e:
+            logger.error(f'Failed to initialize Google AI: {e}')
+            self.api_key = None
+
+    def is_available(self) -> bool:
+        """Check if the processor is properly configured"""
+        return (GOOGLE_AI_AVAILABLE and 
+                HTTP_CLIENT_AVAILABLE and 
+                self.api_key is not None)
 
     def clean_model_output(self, text: str) -> str:
         """Clean model outputs to remove meta-commentary"""
+        if not text:
+            return ""
+            
         import re
         text = re.sub(r'^(Okay|Here\'?s?( is)?|Let me|I will|I\'ll|I can|I would|I am going to|Allow me to|Sure|Of course|Certainly|Alright).*?,\s*', '', text, flags=re.IGNORECASE)
         text = re.sub(r'^(Here\'?s?( is)?|I\'?ll?|Let me|I will|I can|I would|I am going to|Allow me to|Sure|Of course|Certainly).*?(summary|translate|breakdown|analysis).*?:\s*', '', text, flags=re.IGNORECASE)
@@ -75,6 +121,9 @@ class GoogleFilesProcessor:
             'issue_category': 'General Issue',
             'severity_level': 'Moderate'
         }
+        
+        if not diagnosis_text:
+            return fields
         
         try:
             # Extract Brand (multiple patterns)
@@ -165,6 +214,9 @@ class GoogleFilesProcessor:
 
     async def upload_to_google_files(self, file_buffer: bytes, file_name: str, mime_type: str) -> GoogleFileUploadResult:
         """Upload file to Google Files API using resumable upload"""
+        if not self.is_available():
+            raise Exception("Google Files Processor is not properly configured. Check environment variables and dependencies.")
+            
         logger.info(f"Uploading file to Google Files API: {file_name}")
 
         try:
@@ -183,6 +235,9 @@ class GoogleFilesProcessor:
 
             # Create SSL context and connector
             ssl_context = create_ssl_context()
+            if ssl_context is None:
+                raise Exception("Failed to create SSL context")
+                
             connector = aiohttp.TCPConnector(ssl=ssl_context)
             
             async with aiohttp.ClientSession(connector=connector) as session:
@@ -560,8 +615,6 @@ class GoogleFilesProcessor:
             logger.error(f'Failed to diagnose refrigerator with Gemini: {str(e)}')
             raise Exception(f"Failed to diagnose refrigerator: {str(e)}")
 
-
-
     async def delete_google_file(self, file_name: str) -> None:
         """Delete a file from Google Files API"""
         logger.info(f"Deleting Google file: {file_name}")
@@ -586,8 +639,6 @@ class GoogleFilesProcessor:
         except Exception as e:
             logger.error(f'Error deleting file from Google Files API: {str(e)}')
             # Don't raise exception for delete failures
-
-
 
 # Create default instance
 google_files_processor = GoogleFilesProcessor() 

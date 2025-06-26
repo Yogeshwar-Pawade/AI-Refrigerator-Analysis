@@ -1,7 +1,7 @@
 // API Configuration for FastAPI Backend
 export const API_CONFIG = {
-  // FastAPI backend URL
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+  // FastAPI backend URL - Railway deployment
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://ai-analysis-backend-production.up.railway.app',
   
   // API endpoints
   ENDPOINTS: {
@@ -14,7 +14,7 @@ export const API_CONFIG = {
     CHAT_CONVERSATIONS: '/api/chat/conversations',
     CHAT_CONVERSATION: '/api/chat/conversation',
     CHAT_MESSAGE: '/api/chat/message',
-
+    HEALTH: '/health',
   }
 }
 
@@ -49,4 +49,20 @@ export const apiRequest = async (endpoint: string, options?: RequestInit) => {
   }
   
   return response
+}
+
+// Health check function
+export const checkBackendHealth = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.HEALTH), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    return response.ok
+  } catch (error) {
+    console.error('Backend health check failed:', error)
+    return false
+  }
 } 

@@ -227,15 +227,8 @@ Please provide your response in this exact format:
 `;
 
       // Generate content with the uploaded file
-      const result = await model.generateContent([
-        prompt,
-        {
-          fileData: {
-            fileUri: fileUri,
-            mimeType: mimeType
-          }
-        }
-      ]);
+      // Fixed: Generate content with text-only prompt (file processing temporarily disabled)
+      const result = await model.generateContent(prompt);
 
       const response = await result.response;
       const text = response.text();
